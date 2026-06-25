@@ -1,0 +1,40 @@
+{
+  "id": "rage-realm",
+  "realm": "rage-realm",
+  "enabled": true,
+  "registrationAllowed": false,
+  "verifyEmail": false,
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "email": "testuser@example.com",
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testpassword",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "rage-app",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "rage-app-secret",
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "fullScopeAllowed": true
+    }
+  ]
+}
