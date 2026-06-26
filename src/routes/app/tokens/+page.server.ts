@@ -1,14 +1,13 @@
-import { fail, redirect, type Actions } from '@sveltejs/kit';
-import { TokenController } from '$lib/controllers/AuthController';
+import { fail, type Actions } from '@sveltejs/kit';
+import { TokenController } from '$lib/controllers/TokenController';
 import type { PageServerLoad } from './$types';
+import { AuthController } from '$lib/controllers/AuthController';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) {
-		redirect(307, '/login');
-	}
+	const session = await AuthController.getSession(locals)
 
 	try {
-		const tokens = await TokenController.getFromOwner(locals.user.username)
+		const tokens = await TokenController.getFromOwner(session.user.id)
 
 		// Mask tokens for display (security first)
 		const maskedTokens = tokens.map(t => {
@@ -36,9 +35,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
-		if (!locals.user) {
-			return fail(401, { error: 'Non autorisé' });
-		}
+		const session = await AuthController.getSession(locals)
 
 		const data = await request.formData();
 		const name = data.get('name') as string;
@@ -48,7 +45,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const createdToken = await TokenController.create(name, locals.user.username)
+			const createdToken = await TokenController.create(name, session.user.id)
 			return { success: true, createdToken };
 		} catch (err: any) {
 			console.error('Error creating API token:', err);
@@ -57,9 +54,7 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ request, locals }) => {
-		if (!locals.user) {
-			return fail(401, { error: 'Non autorisé' });
-		}
+		const session = await AuthController.getSession(locals)
 
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -70,7 +65,7 @@ export const actions: Actions = {
 
 		try {
 			// Verify ownership before deleting
-			if (await TokenController.isOwner(id, locals.user.username)) {
+			if (await TokenController.isOwner(id, session.user.id)) {
 				return fail(403, { error: 'Action interdite.' });
 			}
 

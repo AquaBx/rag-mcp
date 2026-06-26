@@ -1,31 +1,19 @@
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { MemoryController } from '$lib/controllers/MemoryController';
+import { AuthController } from '$lib/controllers/AuthController';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
+	const session = await AuthController.getSession(locals)
 	const q = url.searchParams.get('q') || '';
 
 	try {
-		let memories
-		if (q.trim()) {
-			const retrieved_memories = await MemoryController.search(q, 20);
-
-			memories = retrieved_memories.map(m => {
-				const similarity = 1 - (m.distance ?? 1);
-				const score = Math.max(0, Math.min(100, Math.round(similarity * 100)));
-				return {
-					...m,
-					score
-				};
-			});
-		} else {
-			const retrieved_memories = await MemoryController.getAll();
-			memories = retrieved_memories.map(m => ({ ...m, score: null }))
-		}
-		return { memories };
+		const memories = q.trim() ? await MemoryController.search(q, 20) : await MemoryController.getAll();
+		return { memories, q };
 	} catch (err: any) {
 		console.error('Error during loading memories:', err);
 		return {
+			q,
 			memories: [],
 			error: `Impossible de charger les données: ${err.message}`
 		};
@@ -33,7 +21,9 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	add: async ({ request }) => {
+	add: async ({ request, locals }) => {
+		const session = await AuthController.getSession(locals)
+
 		const data = await request.formData();
 		const title = data.get('title') as string;
 		const content = data.get('content') as string;
@@ -58,7 +48,9 @@ export const actions: Actions = {
 		}
 	},
 
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		const session = await AuthController.getSession(locals)
+
 		const data = await request.formData();
 		const id = data.get('id') as string;
 
@@ -67,7 +59,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			await MemoryController.delete(id)
+			await MemoryController.delete(parseInt(id))
 			return { success: true };
 		} catch (err: any) {
 			console.error('Error deleting memory:', err);

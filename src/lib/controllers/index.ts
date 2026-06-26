@@ -18,23 +18,23 @@ export const db = await connect("./db/agent.db");
 await db.exec("PRAGMA journal_mode=WAL;");
 await db.exec(SCHEMA);
 
-import { pipeline } from '@huggingface/transformers';
+import { FeatureExtractionPipeline, pipeline } from '@huggingface/transformers';
 
 const modelName = 'Xenova/all-MiniLM-L6-v2';
 
-let extractor: any = null;
+let extractor: FeatureExtractionPipeline;
 
 async function getExtractor() {
-	if (!extractor) {
-		extractor = await pipeline('feature-extraction', modelName);
-	}
-	return extractor;
+    if (!extractor) {
+        extractor = await pipeline('feature-extraction', modelName);
+    }
+    return extractor;
 }
 
-export async function embed(content: string): Promise<number[]> {
-	const ext = await getExtractor();
-	const output = await ext(content, { pooling: 'mean', normalize: true });
-	const embedding = Array.from(output.data) as number[];
+export async function embed(content: string, type: "query" | "document"): Promise<number[]> {
+    const ext = await getExtractor();
+    const output = await ext(`${type}: ${content}`, { pooling: 'mean', normalize: true });
+    const embedding = Array.from(output.data) as number[];
 
-	return embedding
+    return embedding
 }

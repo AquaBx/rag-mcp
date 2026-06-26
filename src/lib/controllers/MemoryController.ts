@@ -6,23 +6,21 @@ export const MemorySchema = z.object({
     id: z.number(),
     content: z.string(),
     title: z.string(),
-    embedding: z.array(z.number()),
     distance: z.optional(z.number()),
 });
 
 export type Memory = z.infer<typeof MemorySchema>;
 
-
 export class MemoryController {
     static async search(query: string, count: number = 1): Promise<(Memory)[]> {
-        const embedding = await embed(query)
+        const embedding = await embed(query, "query")
 
         const req = await db.prepare(`SELECT id, content, title, vector_distance_cos(embedding, vector8(?)) AS distance FROM memories WHERE embedding IS NOT NULL ORDER BY distance ASC LIMIT ?;`)
         return await req.all(JSON.stringify(embedding), count)
     }
 
-    static async getById(id: number): Promise<Memory> {
-        const req = await db.prepare(`SELECT * FROM memories WHERE id = ?`)
+    static async getById(id: number): Promise<Memory | undefined> {
+        const req = await db.prepare(`SELECT id, content, title FROM memories WHERE id = ?`)
         return await req.get(id)
     }
 
@@ -32,7 +30,7 @@ export class MemoryController {
     }
 
     static async update(id: number, title: string, content: string) {
-        const embedding = await embed(title + content)
+        const embedding = await embed(title + content, "document")
 
         const req = await db.prepare(`UPDATE memories SET title = ?, content = ?, embedding = vector8(?) WHERE id = ?`)
         const resp = await req.run(title, content, JSON.stringify(embedding), id)
@@ -70,7 +68,7 @@ export class MemoryController {
     }
 
     static async create(title: string, content: string): Promise<number> {
-        const embedding = await embed(title + content)
+        const embedding = await embed(title + content, "document")
 
         const req = await db.prepare(`INSERT INTO memories (title, content, embedding) VALUES (?, ?, vector8(?))`)
         const resp = await req.run(title, content, JSON.stringify(embedding))
@@ -79,8 +77,8 @@ export class MemoryController {
         return id;
     }
 
-    static async getAll() {
-        const req = await db.prepare(`SELECT * FROM memories`)
+    static async getAll() : Promise<Memory[]> {
+        const req = await db.prepare(`SELECT id, content, title FROM memories`)
         return await req.all()
     }
 }

@@ -8,8 +8,8 @@
 	// Dynamically compute the SSE connection URL based on current host
 	const sseUrl = $derived(
 		typeof window !== "undefined"
-			? `${window.location.origin}/api/mcp/sse`
-			: "http://localhost:5173/api/mcp/sse",
+			? `${window.location.origin}/mcp`
+			: "http://localhost:5173/mcp",
 	);
 
 	// JSON configuration for Claude desktop with custom headers

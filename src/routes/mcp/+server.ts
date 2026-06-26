@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { RequestHandler } from './$types';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { TokenController } from '$lib/controllers/AuthController';
+import { TokenController } from '$lib/controllers/TokenController';
 import { MemoryController, MemorySchema } from '$lib/controllers/MemoryController';
 
 function createServer() {
@@ -12,11 +12,11 @@ function createServer() {
         'update-memory',
         {
             title: 'Update Memory',
-            description: 'Change the title and the content of a memory',
+            description: 'Modify an existing memory (title and content) in the database. Call this tool automatically whenever you want to update, edit, or correct a stored memory, fact, user preference, or piece of context. CRITICAL: The content parameter must not exceed 512 tokens (approx. 2000 characters). Summarize or split into multiple memories if the content is longer.',
             inputSchema: z.object({
-                id: z.number(),
-                title: z.string(),
-                content: z.string(),
+                id: z.number().describe('The unique ID of the memory to update'),
+                title: z.string().describe('A concise and descriptive title summarizing the memory'),
+                content: z.string().describe('The updated content of the memory. MUST be 512 tokens or fewer (approx. 2000 characters). Summarize or split if necessary.'),
             }),
             outputSchema: z.object({}),
         },
@@ -36,10 +36,10 @@ function createServer() {
         'create-memory',
         {
             title: 'Create Memory',
-            description: 'Create a memory from the title and the content. Return the id.',
+            description: 'Save and persist new information, facts, notes, context, or user preferences in the database. Call this tool automatically whenever you want to remember new information or context for future sessions. CRITICAL: The content parameter must not exceed 512 tokens (approx. 2000 characters). Summarize or split into multiple memories if the content is longer.',
             inputSchema: z.object({
-                title: z.string(),
-                content: z.string(),
+                title: z.string().describe('A concise and descriptive title summarizing the memory'),
+                content: z.string().describe('The content of the memory to persist. MUST be 512 tokens or fewer (approx. 2000 characters). Summarize or split if necessary.'),
             }),
             outputSchema: z.object({ id: z.number() }),
         },
@@ -57,11 +57,11 @@ function createServer() {
         'get-memory',
         {
             title: 'Get Memory',
-            description: 'Return a memory from an id',
+            description: 'Retrieve the title and content of a specific memory by its unique ID.',
             inputSchema: z.object({
-                id: z.number(),
+                id: z.number().describe('The unique ID of the memory to retrieve'),
             }),
-            outputSchema: z.object({ result: MemorySchema }),
+            outputSchema: z.object({ result: MemorySchema.optional().nullable() }),
         },
         async ({ id }) => {
             const output = { result: await MemoryController.getById(id) }
@@ -76,10 +76,10 @@ function createServer() {
         'search-memory',
         {
             title: 'Search',
-            description: 'Return memories based on semantic.',
+            description: 'Search for saved memories based on semantic similarity. Use this tool to retrieve relevant context or past information when answering user queries.',
             inputSchema: z.object({
-                query: z.string(),
-                count: z.number(),
+                query: z.string().describe('The semantic search query to match against memories'),
+                count: z.number().describe('The number of matching memories to return (default is 1, max is 20)'),
             }),
             outputSchema: z.object({ results: z.array(MemorySchema) }),
         },
@@ -97,9 +97,9 @@ function createServer() {
         'delete-memory',
         {
             title: 'Delete a Memory',
-            description: 'Delete a memory',
+            description: 'Delete a specific memory by its unique ID.',
             inputSchema: z.object({
-                id: z.number(),
+                id: z.number().describe('The unique ID of the memory to delete'),
             }),
             outputSchema: z.object({}),
         },
