@@ -1,16 +1,16 @@
-FROM node:current AS build
+FROM oven/bun:latest AS build
 
 WORKDIR /build
 
 COPY . .
 
-RUN npm install
-RUN npm run build
+RUN bun install
+RUN bun run build
 
-FROM node:current-alpine AS prod
+FROM oven/bun:latest AS prod
 
 WORKDIR /app
 
 COPY --from=build ./build/build .
 
-CMD ["node","index.js"]
+CMD ["bun","index.js"]
