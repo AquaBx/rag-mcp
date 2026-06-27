@@ -37,7 +37,7 @@ export class MemoryController {
     }
 
     static async tsne() {
-        const req = await db.prepare(`SELECT id, title, embedding FROM memories`);
+        const req = await db.prepare(`SELECT id, title, vector_extract(embedding) AS embedding FROM memories`);
         const resp = await req.all();
 
         if (!resp || resp.length === 0) {
@@ -45,7 +45,7 @@ export class MemoryController {
         }
 
         const embeddings: number[][] = resp.map(el =>
-            el.embedding
+            JSON.parse(el.embedding as string)
         );
 
         const calculatedPerplexity = Math.min(10, Math.max(1, resp.length - 1));

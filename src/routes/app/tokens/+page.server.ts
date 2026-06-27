@@ -1,13 +1,11 @@
 import { fail, type Actions } from '@sveltejs/kit';
 import { TokenController } from '$lib/controllers/TokenController';
 import type { PageServerLoad } from './$types';
-import { AuthController } from '$lib/controllers/AuthController';
+import { z } from "zod"
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const session = await AuthController.getSession(locals)
-
 	try {
-		const tokens = await TokenController.getFromOwner(session.user.id)
+		const tokens = await TokenController.getFromOwner(locals.session.user)
 
 		// Mask tokens for display (security first)
 		const maskedTokens = tokens.map(t => {
@@ -35,17 +33,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
-		const session = await AuthController.getSession(locals)
+		const data = Object.fromEntries((await request.formData()).entries());
 
-		const data = await request.formData();
-		const name = data.get('name') as string;
+		const res = z.object({
+			name: z.string(),
+		}).safeParse(data)
 
-		if (!name || !name.trim()) {
-			return fail(400, { error: 'Le nom du jeton est requis.' });
+		if (!res.success) {
+			return fail(400, res.error);
 		}
 
 		try {
-			const createdToken = await TokenController.create(name, session.user.id)
+			const createdToken = await TokenController.create(res.data.name, locals.session.user)
 			return { success: true, createdToken };
 		} catch (err: any) {
 			console.error('Error creating API token:', err);
@@ -54,22 +53,23 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ request, locals }) => {
-		const session = await AuthController.getSession(locals)
+		const data = Object.fromEntries((await request.formData()).entries());
 
-		const data = await request.formData();
-		const id = data.get('id') as string;
+		const res = z.object({
+			id: z.coerce.number(),
+		}).safeParse(data)
 
-		if (!id) {
-			return fail(400, { error: 'ID requis.' });
+		if (!res.success) {
+			return fail(400, res.error);
 		}
 
 		try {
 			// Verify ownership before deleting
-			if (await TokenController.isOwner(id, session.user.id)) {
+			if (!await TokenController.isOwner(res.data.id, locals.session.user)) {
 				return fail(403, { error: 'Action interdite.' });
 			}
 
-			await TokenController.delete(id)
+			await TokenController.delete(res.data.id)
 
 			return { success: true };
 		} catch (err: any) {

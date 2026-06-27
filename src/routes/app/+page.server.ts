@@ -1,10 +1,9 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { MemoryController } from '$lib/controllers/MemoryController';
-import { AuthController } from '$lib/controllers/AuthController';
+import { z } from "zod"
 
-export const load: PageServerLoad = async ({ locals, url }) => {
-	const session = await AuthController.getSession(locals)
+export const load: PageServerLoad = async ({ url }) => {
 	const q = url.searchParams.get('q') || '';
 
 	try {
@@ -22,44 +21,41 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 export const actions: Actions = {
 	add: async ({ request, locals }) => {
-		const session = await AuthController.getSession(locals)
+		const data = Object.fromEntries((await request.formData()).entries());
 
-		const data = await request.formData();
-		const title = data.get('title') as string;
-		const content = data.get('content') as string;
+		const res = z.object({
+			title: z.string(),
+			content: z.string(),
+		}).safeParse(data)
 
-		if (!title || !title.trim()) {
-			return fail(400, { title, content, error: 'Le titre est requis.' });
-		}
-		if (!content || !content.trim()) {
-			return fail(400, { title, content, error: 'Le contenu est requis.' });
+		if (!res.success) {
+			return fail(400, res.error);
 		}
 
 		try {
-			await MemoryController.create(title, content)
+			await MemoryController.create(res.data.title, res.data.content)
 			return { success: true };
 		} catch (err: any) {
 			console.error('Error adding memory:', err);
 			return fail(500, {
-				title,
-				content,
 				error: `Erreur lors de la sauvegarde: ${err.message}`
 			});
 		}
 	},
 
 	delete: async ({ request, locals }) => {
-		const session = await AuthController.getSession(locals)
+		const data = Object.fromEntries((await request.formData()).entries());
 
-		const data = await request.formData();
-		const id = data.get('id') as string;
+		const res = z.object({
+			id: z.coerce.number(),
+		}).safeParse(data)
 
-		if (!id) {
-			return fail(400, { error: 'L\'ID du contenu à supprimer est manquant.' });
+		if (!res.success) {
+			return fail(400, res.error);
 		}
 
 		try {
-			await MemoryController.delete(parseInt(id))
+			await MemoryController.delete(res.data.id)
 			return { success: true };
 		} catch (err: any) {
 			console.error('Error deleting memory:', err);

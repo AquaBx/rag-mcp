@@ -1,5 +1,6 @@
 import { db } from "$lib/controllers";
 import crypto from 'crypto';
+import type { DefinedUser } from "./AuthController";
 
 interface Token {
     id: number
@@ -26,25 +27,25 @@ export class TokenController {
         }
     }
 
-    static async getFromOwner(owner: string): Promise<Token[]> {
-        const req = await db.prepare('SELECT id, name, token, created_at FROM api_tokens WHERE username = ? ORDER BY id DESC');
-        return (await req.all(owner))
+    static async getFromOwner(owner: DefinedUser): Promise<Token[]> {
+        const req = await db.prepare('SELECT id, name, token, created_at FROM api_tokens WHERE user_id = ? ORDER BY id DESC');
+        return (await req.all(owner.id))
     }
 
-    static async create(name: string, owner: string): Promise<string> {
+    static async create(name: string, owner: DefinedUser): Promise<string> {
         const rawToken = 'rage_' + crypto.randomBytes(24).toString('hex');
-        const req = await db.prepare('INSERT INTO api_tokens (name, token, username) VALUES (?, ?, ?)');
-        await req.run(name.trim(), rawToken, owner);
+        const req = await db.prepare('INSERT INTO api_tokens (name, token, user_id) VALUES (?, ?, ?)');
+        await req.run(name.trim(), rawToken, owner.id);
         return rawToken
     }
 
-    static async isOwner(id: string, supposedOwner: string): Promise<boolean> {
-        const reqCheck = await db.prepare('SELECT username FROM api_tokens WHERE id = ?');
-        const realOwner = await reqCheck.get(id);
-        return supposedOwner === realOwner
+    static async isOwner(id: number, supposedOwner: DefinedUser): Promise<boolean> {
+        const reqCheck = await db.prepare('SELECT user_id FROM api_tokens WHERE id = ?');
+        const realOwner : { user_id: string } | undefined = (await reqCheck.get(id));
+        return realOwner?.user_id === supposedOwner.id;
     }
 
-    static async delete(id: string) {
+    static async delete(id: number) {
         const req = await db.prepare('DELETE FROM api_tokens WHERE id = ?');
         await req.run(id);
     }

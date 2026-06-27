@@ -1,6 +1,3 @@
-import { db } from "$lib/controllers";
-import crypto from 'crypto';
-import { error, redirect } from "@sveltejs/kit";
 import type { Session, User } from "@auth/sveltekit";
 import { SvelteKitAuth } from "@auth/sveltekit"
 import Keycloak from "@auth/sveltekit/providers/keycloak"
@@ -32,21 +29,11 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 })
 
 
-interface DefinedUser extends User {
+export interface DefinedUser extends User {
     id: string
     name: string
 }
 
-interface DefinedSession extends Session {
+export interface DefinedSession extends Session {
     user: DefinedUser
-}
-
-export class AuthController {
-    static async getSession(locals: App.Locals): Promise<DefinedSession> {
-        let session = await locals.auth()
-        if (!session || !session.user || !session.user.id || !session.user.name) {
-            throw redirect(303, '/');
-        }
-        return session as DefinedSession
-    }
 }

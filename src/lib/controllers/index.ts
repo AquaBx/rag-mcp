@@ -1,4 +1,7 @@
 import { connect } from "@tursodatabase/database";
+import fs from "node:fs";
+
+fs.mkdirSync("./db", { recursive: true });
 
 const SCHEMA = `CREATE TABLE IF NOT EXISTS memories (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -10,7 +13,7 @@ CREATE TABLE IF NOT EXISTS api_tokens (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     name            TEXT NOT NULL,
     token           TEXT NOT NULL UNIQUE,
-    username        TEXT NOT NULL,
+    user_id        TEXT NOT NULL,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );`
 

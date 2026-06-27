@@ -6,11 +6,11 @@
 	import type { ActionResult } from "@sveltejs/kit";
 	import { invalidateAll } from "$app/navigation";
 
-	let { id }: { id: string } = $props();
+	let { id }: { id: number } = $props();
 
 	async function handleDelete() {
 		const data = new FormData();
-		data.set("id", id);
+		data.set("id", id.toString());
 		const response = await fetch("?/delete", {
 			method: "POST",
 			body: data,

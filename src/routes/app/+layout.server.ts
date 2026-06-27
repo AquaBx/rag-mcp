@@ -1,8 +1,5 @@
-import { AuthController } from '$lib/controllers/AuthController';
-import type { PageServerLoad } from './$types';
+import type { LayoutServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
-	const session = await AuthController.getSession(locals)
-
-	return { session };
+export const load: LayoutServerLoad = async ({ locals }) => {
+	return { session: locals.session };
 };
