@@ -12,6 +12,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
         }),
     ],
     secret: env.AUTH_SECRET,
+    trustHost: env.AUTH_TRUST_HOST === "true",
     callbacks: {
         async jwt({ token, account, profile }) {
             if (profile) {
