@@ -1,17 +1,17 @@
 import type { Session, User } from "@auth/sveltekit";
 import { SvelteKitAuth } from "@auth/sveltekit"
 import Keycloak from "@auth/sveltekit/providers/keycloak"
-import { AUTH_SECRET, KC_CLIENT_ID, KC_CLIENT_SECRET, KC_ISSUER } from "$env/static/private"
+import { env } from "$env/dynamic/private"
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
     providers: [
         Keycloak({
-            clientId: KC_CLIENT_ID,
-            clientSecret: KC_CLIENT_SECRET,
-            issuer: KC_ISSUER
+            clientId: env.KC_CLIENT_ID,
+            clientSecret: env.KC_CLIENT_SECRET,
+            issuer: env.KC_ISSUER
         }),
     ],
-    secret: AUTH_SECRET,
+    secret: env.AUTH_SECRET,
     callbacks: {
         async jwt({ token, account, profile }) {
             if (profile) {
