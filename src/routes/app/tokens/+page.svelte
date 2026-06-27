@@ -4,12 +4,9 @@
 	import TrashIcon from "@lucide/svelte/icons/trash";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import CopyBlock from "$lib/CopyBlock.svelte";
-	import { env } from "$env/dynamic/private";
 
-	// Dynamically compute the SSE connection URL based on current host
-	const sseUrl = `${env.DOMAIN}/mcp`;
+	const sseUrl = `${window.location.origin}/mcp`;
 
-	// JSON configuration for Claude desktop with custom headers
 	const claudeConfig = $derived(
 		JSON.stringify(
 			{
