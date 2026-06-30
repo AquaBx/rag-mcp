@@ -3,24 +3,21 @@ import type { Actions, PageServerLoad } from './$types';
 import { MemoryController } from '$lib/controllers/MemoryController';
 import { z } from "zod"
 
-export const load: PageServerLoad = async ({ url }) => {
-	const q = url.searchParams.get('q') || '';
-
+export const load: PageServerLoad = async ({ url, params }) => {
 	try {
-		const memories = q.trim() ? await MemoryController.search(q, 20) : await MemoryController.getAll();
-		return { memories, q };
+		const memory = await MemoryController.getById(parseInt(params.id));
+		return { memory };
 	} catch (err: any) {
 		console.error('Error during loading memories:', err);
 		return {
-			q,
-			memories: [],
+			memory: undefined,
 			error: `Impossible de charger les données: ${err.message}`
 		};
 	}
 };
 
 export const actions: Actions = {
-	add: async ({ request, locals }) => {
+	update: async ({ request, locals, params }) => {
 		const data = Object.fromEntries((await request.formData()).entries());
 
 		const res = z.object({
@@ -33,7 +30,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			await MemoryController.create(res.data.title, res.data.content)
+			await MemoryController.update(parseInt(params.id), res.data.title, res.data.content)
 			return { success: true };
 		} catch (err: any) {
 			console.error('Error adding memory:', err);
@@ -43,19 +40,9 @@ export const actions: Actions = {
 		}
 	},
 
-	delete: async ({ request, locals }) => {
-		const data = Object.fromEntries((await request.formData()).entries());
-
-		const res = z.object({
-			id: z.coerce.number(),
-		}).safeParse(data)
-
-		if (!res.success) {
-			return fail(400, res.error);
-		}
-
+	delete: async ({ request, params }) => {
 		try {
-			await MemoryController.delete(res.data.id)
+			await MemoryController.delete(parseInt(params.id))
 			return { success: true };
 		} catch (err: any) {
 			console.error('Error deleting memory:', err);

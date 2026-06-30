@@ -11,7 +11,7 @@
 		JSON.stringify(
 			{
 				mcpServers: {
-					"rage-memex": {
+					"memorag": {
 						url: sseUrl,
 						headers: {
 							Authorization: "Bearer VOTRE_JETON_API_ICI",
@@ -30,7 +30,7 @@
 </script>
 
 <svelte:head>
-	<title>API Tokens — Rage Memex</title>
+	<title>API Tokens — Memorag</title>
 </svelte:head>
 
 <main class="flex flex-col gap-4">

@@ -43,7 +43,7 @@
 </script>
 
 <svelte:head>
-	<title>Rage Memex — Base de Connaissance Sémantique</title>
+	<title>Memorag</title>
 </svelte:head>
 <div class="flex gap-8 mx-auto mb-8">
 	<form method="GET" action="/app" class="relative w-full">
@@ -90,6 +90,7 @@
 					<Input
 						id="title"
 						name="title"
+						required
 						placeholder="Memory title..."
 					/>
 				</div>
@@ -98,6 +99,7 @@
 					<Textarea
 						id="content"
 						name="content"
+						required
 						placeholder="Type your context here..."
 						class="min-h-25"
 					/>

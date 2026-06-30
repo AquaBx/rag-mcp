@@ -33,7 +33,7 @@ export class TokenController {
     }
 
     static async create(name: string, owner: DefinedUser): Promise<string> {
-        const rawToken = 'rage_' + crypto.randomBytes(24).toString('hex');
+        const rawToken = 'memorag_' + crypto.randomBytes(24).toString('hex');
         const req = await db.prepare('INSERT INTO api_tokens (name, token, user_id) VALUES (?, ?, ?)');
         await req.run(name.trim(), rawToken, owner.id);
         return rawToken

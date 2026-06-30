@@ -4,7 +4,7 @@
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import { applyAction, deserialize, enhance } from "$app/forms";
 	import type { ActionResult } from "@sveltejs/kit";
-	import { invalidateAll } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
 
 	let { id }: { id: number } = $props();
 
@@ -42,6 +42,7 @@
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content>
 		<DropdownMenu.Label>Actions</DropdownMenu.Label>
+		<DropdownMenu.Item onclick={()=>{goto(`/app/${id}`)}}>View</DropdownMenu.Item>
 		<DropdownMenu.Item onclick={handleDelete}>Delete</DropdownMenu.Item>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>

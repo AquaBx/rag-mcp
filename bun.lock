@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "rage",
+      "name": "Memorag",
       "dependencies": {
         "@auth/sveltekit": "^1.11.2",
         "@huggingface/transformers": "^4.2.0",

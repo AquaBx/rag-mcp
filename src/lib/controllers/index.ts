@@ -7,7 +7,7 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS memories (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     title           TEXT NOT NULL,
     content         TEXT NOT NULL,
-    embedding       F8_BLOB(384)
+    embedding       F8_BLOB(1024)
 );
 CREATE TABLE IF NOT EXISTS api_tokens (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,21 +23,34 @@ await db.exec(SCHEMA);
 
 import { FeatureExtractionPipeline, pipeline } from '@huggingface/transformers';
 
-const modelName = 'Xenova/all-MiniLM-L6-v2';
+const modelName = 'onnx-community/Qwen3-Embedding-0.6B-ONNX';
 
 let extractor: FeatureExtractionPipeline;
 
 async function getExtractor() {
     if (!extractor) {
-        extractor = await pipeline('feature-extraction', modelName);
+        console.log("Downloading")
+        extractor = await pipeline('feature-extraction', modelName, { dtype: "q8" });
+        console.log("Downloaded")
     }
     return extractor;
 }
 
 export async function embed(content: string, type: "query" | "document"): Promise<number[]> {
     const ext = await getExtractor();
-    const output = await ext(`${type}: ${content}`, { pooling: 'mean', normalize: true });
-    const embedding = Array.from(output.data) as number[];
 
-    return embedding
+    let formattedText : string
+    if (type === "query"){
+        formattedText = `Instruct: Given the following query, retrieve relevant document that reply this query\nQuery:${content}`
+    }
+    else {
+        formattedText = content
+    }
+
+    const output = await ext(formattedText, {
+        pooling: 'last_token',
+        normalize: true
+    });
+
+    return Array.from(output.data) as number[]
 }

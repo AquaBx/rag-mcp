@@ -6,7 +6,7 @@ import { TokenController } from '$lib/controllers/TokenController';
 import { MemoryController, MemorySchema } from '$lib/controllers/MemoryController';
 
 function createServer() {
-    const server = new McpServer({ name: 'rage-memex', version: '1.0.0' });
+    const server = new McpServer({ name: 'memorag', version: '1.0.0' });
 
     server.registerTool(
         'update-memory',
