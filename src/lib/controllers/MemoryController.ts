@@ -1,5 +1,5 @@
 import { Manifold } from '@kanaries/ml';
-import { db, embed } from "$lib/controllers";
+import { db, embedDocument, embedQuery } from "$lib/controllers";
 import { z } from 'zod';
 
 export const MemorySchema = z.object({
@@ -13,7 +13,7 @@ export type Memory = z.infer<typeof MemorySchema>;
 
 export class MemoryController {
     static async search(query: string, count: number = 1): Promise<(Memory)[]> {
-        const embedding = await embed(query, "query")
+        const embedding = await embedQuery(query)
 
         const req = await db.prepare(`SELECT id, content, title, vector_distance_cos(embedding, vector8(?)) AS distance FROM memories WHERE embedding IS NOT NULL ORDER BY distance ASC LIMIT ?;`)
         return await req.all(JSON.stringify(embedding), count)
@@ -30,7 +30,7 @@ export class MemoryController {
     }
 
     static async update(id: number, title: string, content: string) {
-        const embedding = await embed(title + content, "document")
+        const embedding = await embedDocument(title, content)
 
         const req = await db.prepare(`UPDATE memories SET title = ?, content = ?, embedding = vector8(?) WHERE id = ?`)
         const resp = await req.run(title, content, JSON.stringify(embedding), id)
@@ -68,7 +68,7 @@ export class MemoryController {
     }
 
     static async create(title: string, content: string): Promise<number> {
-        const embedding = await embed(title + content, "document")
+        const embedding = await embedDocument(title, content)
 
         const req = await db.prepare(`INSERT INTO memories (title, content, embedding) VALUES (?, ?, vector8(?))`)
         const resp = await req.run(title, content, JSON.stringify(embedding))
@@ -77,7 +77,7 @@ export class MemoryController {
         return id;
     }
 
-    static async getAll() : Promise<Memory[]> {
+    static async getAll(): Promise<Memory[]> {
         const req = await db.prepare(`SELECT id, content, title FROM memories`)
         return await req.all()
     }

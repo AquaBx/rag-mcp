@@ -7,7 +7,7 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS memories (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     title           TEXT NOT NULL,
     content         TEXT NOT NULL,
-    embedding       F8_BLOB(1024)
+    embedding       F8_BLOB(768)
 );
 CREATE TABLE IF NOT EXISTS api_tokens (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,7 +23,7 @@ await db.exec(SCHEMA);
 
 import { FeatureExtractionPipeline, pipeline } from '@huggingface/transformers';
 
-const modelName = 'onnx-community/Qwen3-Embedding-0.6B-ONNX';
+const modelName = 'onnx-community/embeddinggemma-300m-ONNX';
 
 let extractor: FeatureExtractionPipeline;
 
@@ -36,19 +36,26 @@ async function getExtractor() {
     return extractor;
 }
 
-export async function embed(content: string, type: "query" | "document"): Promise<number[]> {
+export async function embedDocument(title: string, content: string): Promise<number[]> {
     const ext = await getExtractor();
 
-    let formattedText : string
-    if (type === "query"){
-        formattedText = `Instruct: Given the following query, retrieve relevant document that reply this query\nQuery:${content}`
-    }
-    else {
-        formattedText = content
-    }
+    const formattedText = `title: ${title} | text: ${content}`
 
     const output = await ext(formattedText, {
-        pooling: 'last_token',
+        pooling: 'mean',
+        normalize: true
+    });
+
+    return Array.from(output.data) as number[]
+}
+
+export async function embedQuery(query: string): Promise<number[]> {
+    const ext = await getExtractor();
+
+    const formattedText = `task: Given the following query, retrieve relevant document that reply this query | query: ${query}`
+
+    const output = await ext(formattedText, {
+        pooling: 'mean',
         normalize: true
     });
 
